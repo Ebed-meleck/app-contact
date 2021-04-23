@@ -5,37 +5,38 @@ import {
   AUTH_ERROR,
 } from "../actions/actions";
 import axios from "axios";
-const url = "http://localhost:8000";
 
 const state = {
   token: localStorage.getItem("token" || ""),
   status: "",
   user: {},
+  isAuth: false,
 };
 
 const getters = {
-  isAuth: (state) => !!state.token,
+  isAuthenticated: (state) => !!state.token,
   authStatus: (state) => state.status,
 };
 
 const actions = {
-  onSignIn: ({ commit }, user) => {
+  [AUTH_REQUEST]: ({ commit }, user) => {
     return new Promise((resolve, reject) => {
       commit(AUTH_REQUEST);
       axios
-        .post({ url: url + "auth/login", data: user, method: "POST" })
+        .post("auth/login", user)
         .then((res) => {
+          const isAuth = res.data.auth;
           const token = res.data.token;
           const user = res.data.userId;
           localStorage.setItem("token", token);
-          axios.defaults.headers.common["Authorization"] = token;
-          commit(AUTH_SUCESS, token, user);
+          axios.defaults.headers.common["authorization"] = token;
+          commit(AUTH_SUCESS, token, user, isAuth);
           resolve(res);
         })
-        .catch((err) => {
-          commit(AUTH_ERROR, err);
+        .catch((error) => {
+          commit(AUTH_ERROR, error);
           localStorage.removeItem("token");
-          reject(err);
+          reject(error);
         });
     });
   },
@@ -53,10 +54,11 @@ const mutations = {
   [AUTH_REQUEST]: (state) => {
     state.status = "loading";
   },
-  [AUTH_SUCESS]: (state, token, user) => {
+  [AUTH_SUCESS]: (state, token, user, isAuth) => {
     state.status = "success";
     state.token = token;
     state.user = user;
+    state.isAuth = isAuth;
   },
   [AUTH_ERROR]: (state) => {
     state.status = "error";
@@ -64,6 +66,7 @@ const mutations = {
   [AUTH_LOGOUT]: (state) => {
     state.status = "";
     state.token = "";
+    state.isAuth = false;
   },
 };
 

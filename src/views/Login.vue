@@ -2,7 +2,7 @@
   <div class="login-container">
     <h1>Connexion</h1>
     <div class="form">
-      <form @submit.prevent="login()">
+      <form @submit.prevent="login">
         <div class="form-group">
           <label for="username">Username</label>
           <input type="text" id="username" v-model="user.username" />
@@ -16,30 +16,36 @@
             Login
           </button>
         </div>
+        <span class="text-danger" v-if="errorMessage"
+          >Bad username or password</span
+        >
       </form>
     </div>
   </div>
 </template>
 <script>
-//import { AUTH_REQUEST } from "../store/actions/actions";
-import axios from "axios";
+import { AUTH_REQUEST } from "../store/actions/actions";
+//import axios from "axios";
 export default {
   components: "Login",
   data() {
     return {
       user: {},
+      errorMessage: "",
     };
   },
 
   methods: {
     login: function () {
       const { username, password } = this.user;
-      axios
-        .post("http://localhost:8000/auth/login", { username, password })
-        .then((res) => {
-          console.log(res);
+      this.$store
+        .dispatch(AUTH_REQUEST, { username, password })
+        .then(() => {
+          this.$router.push("/dashboard");
+          // console.log(this.$store.getters.isAuthenticated);
         })
         .catch((error) => {
+          this.errorMessage = error;
           console.log(error);
         });
     },
